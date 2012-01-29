@@ -1,0 +1,32 @@
+#!/usr/bin/python2
+
+import random
+import subprocess
+import os
+import argparse
+from time import sleep as stop
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-folder', type=str)
+parser.add_argument('-timeout', type=int)
+
+
+results = parser.parse_args()
+
+
+if all([results.folder, results.timeout]):
+    
+    files = os.listdir(results.folder)
+    random.shuffle(files)
+    
+    for item in files:
+        bkgd = os.path.join(results.folder, item)
+
+        subprocess.Popen(['feh', '--bg-scale', bkgd])
+        stop(results.timeout * 60)
+else:
+    print 'Usage is:\n\t wallpaperchanger -folder "dirname" -timeout "int"'
+    
+
+
