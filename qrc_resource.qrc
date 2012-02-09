@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file alias="git">.git</file>
+		<file alias="qrc_creator">qrc_creator.py</file>
+		<file alias="qrc_resource">qrc_resource.qrc</file>
+	</qresource>
+</RCC>
