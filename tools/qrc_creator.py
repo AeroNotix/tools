@@ -4,65 +4,79 @@ import argparse
 import optparse
 import os
 
+from argument import Argument
+
 
 class IgnoredFileError(Exception):
     pass
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-dir',
-                    type=str,
-                    required=True,
-                    help="Directory to create qrc file from"
-                    )
+args = [Argument('dir', type=str, required=True,
+                 help="Directory to create qrc file from"),
 
-parser.add_argument('-ignore',
-                    type=str,
-                    required=False,
-                    help="list of file types to ignore",
-                    nargs='*'
-                    )
+        Argument('ignore', type=str,
+                 help="list of file types to ignore", nargs='*'),
+
+        Argument('prefix', type=str, default='\t\t<file alias=',
+                 help="prefix each entry with a string"),
+
+        Argument('suffix', type=str, default= '</file>\n',
+                 help="prefix each entry with a string"),
+
+        Argument('header', type=str,
+                 default='<!DOCTYPE RCC>\n<RCC version="1.0">\n\t<qresource>\n',
+                 help="outputfile header", nargs='*'),
+
+        Argument('close', type=str,
+                 default='\t</qresource>\n</RCC>\n',
+                 help="outputfile header"),
+
+        Argument('output', type=str,
+                 default='qrc', help='output file type')
+]
+
+for arg in args:
+    parser.add_argument(arg.name, **arg.data)
 
 results = parser.parse_args()
 
-if len(results.dir) > 1:
 
-    # create output file in same dir
-    qrc_file = open(os.path.join(results.dir, 'qrc_resource.qrc'), 'wb')
+# create output file in same dir as input
+ofile = open(os.path.join(results.dir,
+                'resource.{}'.format(results.output)), 'wb'
+        )
 
-    # start writing headers
-    qrc_file.write('<!DOCTYPE RCC>\n<RCC version="1.0">\n')
-    qrc_file.write('\t<qresource>\n')
+# start writing xml headers
+ofile.write(''.join(results.header))
 
-    # iterate through files, only files with extensions
-    # get used and html files get treat differently
+# iterate through files, only files with extensions
+# get used and html files get treat differently
 
-    for file in os.listdir(results.dir):
+for file in os.listdir(results.dir):
 
-        try:
-            if file.split('.')[-1].lower() in results.ignore:
+    try:
+        if file.split('.')[-1].lower() in results.ignore:
 
-                raise IgnoredFileError
+            raise IgnoredFileError
 
-            fname = file.split('.')[0]
+        fname = file.split('.')[0]
 
-            if file.split('.')[1] == 'html':
-                qrc_file.write(
-                        '\t\t<file alias={0}>{1}</file>\n'.format(fname, file)
-                        )
+        if file.split('.')[1] == 'html':
+            ofile.write(
+                    '\t\t{0}{1}>{2}{3}\n'.format(results.prefix[0], fname,
+                                                 file, results.suffix)
+                    )
+        else:
+            ofile.write(
+                    '\t\t{0}"{1}">{2}{3}\n'.format(results.prefix, fname,
+                                                   file, results.suffix)
+                    )
+    except IndexError:
+        pass
 
-            else:
-                qrc_file.write(
-                       '\t\t<file alias="{0}">{1}</file>\n'.format(fname, file)
-                        )
+    except IgnoredFileError:
+        pass
 
-        except IndexError:
-            pass
-
-        except IgnoredFileError:
-            pass
-
-    qrc_file.write('\t</qresource>\n')
-    qrc_file.write('</RCC>\n')
-
-
+ofile.write(results.close)
+ofile.close()
