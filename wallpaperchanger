@@ -9,24 +9,31 @@ from time import sleep as stop
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-folder', type=str)
+parser.add_argument('--cont', action='store_true')
 parser.add_argument('-timeout', type=int)
-
 
 results = parser.parse_args()
 
-
-if all([results.folder, results.timeout]):
-    
+try:
     files = os.listdir(results.folder)
     random.shuffle(files)
-    
-    for item in files:
-        bkgd = os.path.join(results.folder, item)
+except TypeError:
+    print 'Usage is:\n\t wallpaperchanger -folder "dirname" optional -cont'
+    exit()
 
+if all([results.cont, results.timeout]):
+    while 1:
+        bkgd = os.path.join(results.folder, random.choice(files))
         subprocess.Popen(['feh', '--bg-scale', bkgd])
         stop(results.timeout * 60)
+
+
+if results.folder:
+    bkgd = os.path.join(results.folder, random.choice(files))
+    subprocess.Popen(['feh', '--bg-scale', bkgd])
+    
 else:
-    print 'Usage is:\n\t wallpaperchanger -folder "dirname" -timeout "int"'
+    print 'Usage is:\n\t wallpaperchanger -folder "dirname" optional -cont'
     
 
 
