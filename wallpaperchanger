@@ -1,39 +1,53 @@
 #!/usr/bin/python2
-
+'''
+Wallpaper Changer
+Select a random image from provided wallpaper path name.
+Optionaly can change the wallpaper every n minutes.
+'''
 import random
 import subprocess
 import os
 import argparse
-from time import sleep as stop
+from time import sleep
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-folder', type=str)
-parser.add_argument('--cont', action='store_true')
-parser.add_argument('-timeout', type=int)
+parser.add_argument('-folder', required=True, type=str, 
+                    help='Required - the path to your wallpapers folder')
+parser.add_argument('--cont', action='store_true',
+                    help='Enable continuous change of the wallpaper every -timout minutes.')
+parser.add_argument('-timeout', type=int, default=3,
+                    help='Change period in minutes for continuous wallpaper change.')
+parser.add_argument('--refresh', action='store_true', 
+                    help='Reload the folder every change.')
+args = parser.parse_args()
+wallpaper_path = args.folder
+continuous = args.cont
+timeout = args.timeout
+refresh = args.refresh
 
-results = parser.parse_args()
+def get_files():
+    '''Return a list of filenames at wallpaper_path.'''
+    try:
+        files = os.listdir(wallpaper_path)
+    except OSError:
+        print 'No files found at given path'
+        exit(-1)
+    return files
 
-try:
-    files = os.listdir(results.folder)
-    random.shuffle(files)
-except TypeError:
-    print 'Usage is:\n\t wallpaperchanger -folder "dirname" optional -cont'
-    exit()
+def pick_a_file():
+    '''Select a random file from the wallpaper_files list''' 
+    global wallpaper_files 
+    if refresh:
+        wallpaper_files = get_files()
+    winner = random.choice(wallpaper_files)
+    return os.path.join(wallpaper_path, winner)
 
-if all([results.cont, results.timeout]):
-    while 1:
-        bkgd = os.path.join(results.folder, random.choice(files))
-        subprocess.Popen(['feh', '--bg-scale', bkgd])
-        stop(results.timeout * 60)
-
-
-if results.folder:
-    bkgd = os.path.join(results.folder, random.choice(files))
-    subprocess.Popen(['feh', '--bg-scale', bkgd])
-    
-else:
-    print 'Usage is:\n\t wallpaperchanger -folder "dirname" optional -cont'
-    
-
-
+if __name__ == '__main__':
+    wallpaper_files = get_files()
+    if continuous:
+        while True:
+            subprocess.Popen(['feh', '--bg-scale', pick_a_file()])
+            sleep(timeout * 60)
+    else: 
+        subprocess.Popen(['feh', '--bg-scale', pick_a_file()])
